@@ -5,18 +5,22 @@ namespace Cryptovis
 {
     public abstract class Visualiser : MonoBehaviour
     {
+        public Blockchain_Listener blockchain_listener;
         private Queue<Blockchain_Listener.Transaction> transactions;
 
         protected virtual void Start()
         {
-            Blockchain_Listener blockchain_listener = this.GetComponent<Blockchain_Listener>();
-            if( blockchain_listener == null )
+            if( this.blockchain_listener == null )
             {
-                Debug.LogWarning( "No blockchain listener found" );
-                return;
+                this.blockchain_listener = this.GetComponent<Blockchain_Listener>();
+                if( this.blockchain_listener == null )
+                {
+                    Debug.LogWarning( "No blockchain listener found" );
+                    return;
+                }
             }
             
-            blockchain_listener.On_Transaction += this.On_Transaction_Handler;
+            this.blockchain_listener.On_Transaction += this.On_Transaction_Handler;
             this.transactions = new Queue<Blockchain_Listener.Transaction>();
         }
 

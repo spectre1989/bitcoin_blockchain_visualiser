@@ -1,8 +1,11 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using MiniJSON;
 using System;
+using System.Collections.Generic;
 using System.Net;
 using UnityEngine;
+#if !UNITY_WEBPLAYER
 using WebSocketSharp;
+#endif
 
 namespace Cryptovis
 {
@@ -21,6 +24,8 @@ namespace Cryptovis
         }
 
         public event Action<Transaction> On_Transaction;
+
+#if !UNITY_WEBPLAYER
         private WebSocket web_socket;
 
         private void Start()
@@ -60,14 +65,19 @@ namespace Cryptovis
 
         private void On_Message( object sender, MessageEventArgs args )
         {
+            this.Process_Message( args.Data );
+        }
+#endif
+
+        private void Process_Message( string message )
+        {
             if( this.On_Transaction != null )
             {
-                JObject transaction_json = JObject.Parse( args.Data );
-                //JArray inputs_json = transaction_json["x"]["inputs"] as JArray;
-                JArray outputs_json = transaction_json["x"]["out"] as JArray;
-
-                string address = outputs_json[0]["addr"].ToString();
-                float amount = outputs_json[0]["value"].ToObject<float>() * 0.00000001f;
+                Dictionary<string, object> transaction_data = Json.Deserialize( message ) as Dictionary<string, object>;
+                Dictionary<string, object> output = ( ( transaction_data["x"] as Dictionary<string, object> )["out"] as List<object> )[0] as Dictionary<string, object>;
+                string address = output["addr"] as string;
+                float amount = (float)((Int64)output["value"]) * 0.00000001f;
+                
                 Transaction transaction = new Transaction( address, amount );
 
                 this.On_Transaction( transaction );

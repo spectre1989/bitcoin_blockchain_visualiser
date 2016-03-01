@@ -2,13 +2,13 @@
 /*
  * HttpConnection.cs
  *
- * This code is derived from System.Net.HttpConnection.cs of Mono
+ * This code is derived from HttpConnection.cs (System.Net) of Mono
  * (http://www.mono-project.com).
  *
  * The MIT License
  *
  * Copyright (c) 2005 Novell, Inc. (http://www.novell.com)
- * Copyright (c) 2012-2013 sta.blockhead
+ * Copyright (c) 2012-2015 sta.blockhead
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,94 +33,84 @@
 #region Authors
 /*
  * Authors:
- *   Gonzalo Paniagua Javier <gonzalo@novell.com>
+ * - Gonzalo Paniagua Javier <gonzalo@novell.com>
+ */
+#endregion
+
+#region Contributors
+/*
+ * Contributors:
+ * - Liryna <liryna.stark@gmail.com>
+ * - Rohan Singh <rohan-singh@hotmail.com>
  */
 #endregion
 
 using System;
 using System.IO;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
-using System.Reflection;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
-using WebSocketSharp.Net.Security;
 
 namespace WebSocketSharp.Net
 {
   internal sealed class HttpConnection
   {
-    #region Internal Enums
-
-    enum InputState {
-      RequestLine,
-      Headers
-    }
-
-    enum LineState {
-      None,
-      CR,
-      LF
-    }
-
-    #endregion
-
-    #region Private Const Fields
-
-    private const int _bufferSize = 8192;
-
-    #endregion
-
     #region Private Fields
 
-    private byte []             _buffer;
-    private bool                _chunked;
+    private byte[]              _buffer;
+    private const int           _bufferLength = 8192;
     private HttpListenerContext _context;
-    private bool                _contextWasBound;
+    private bool                _contextBound;
     private StringBuilder       _currentLine;
-    private EndPointListener    _epListener;
     private InputState          _inputState;
     private RequestStream       _inputStream;
     private HttpListener        _lastListener;
     private LineState           _lineState;
+    private EndPointListener    _listener;
     private ResponseStream      _outputStream;
     private int                 _position;
-    private ListenerPrefix      _prefix;
+    private HttpListenerPrefix  _prefix;
     private MemoryStream        _requestBuffer;
     private int                 _reuses;
     private bool                _secure;
     private Socket              _socket;
     private Stream              _stream;
+    private object              _sync;
     private int                 _timeout;
     private Timer               _timer;
 
     #endregion
 
-    #region Public Constructors
+    #region Internal Constructors
 
-    public HttpConnection (
-      Socket socket,
-      EndPointListener listener,
-      bool secure,
-      X509Certificate2 cert)
+    internal HttpConnection (Socket socket, EndPointListener listener)
     {
       _socket = socket;
-      _epListener = listener;
-      _secure = secure;
+      _listener = listener;
+      _secure = listener.IsSecure;
 
       var netStream = new NetworkStream (socket, false);
-      if (!secure)
-        _stream = netStream;
-      else {
-        var sslStream = new SslStream (netStream, false);
-        sslStream.AuthenticateAsServer (cert);
+      if (_secure) {
+        var conf = listener.SslConfiguration;
+        var sslStream = new SslStream (netStream, false, conf.ClientCertificateValidationCallback);
+        sslStream.AuthenticateAsServer (
+          conf.ServerCertificate,
+          conf.ClientCertificateRequired,
+          conf.EnabledSslProtocols,
+          conf.CheckCertificateRevocation);
+
         _stream = sslStream;
       }
+      else {
+        _stream = netStream;
+      }
 
+      _sync = new object ();
       _timeout = 90000; // 90k ms for first request, 15k ms from then on.
-      _timer = new Timer (onTimeout, null, Timeout.Infinite, Timeout.Infinite);
+      _timer = new Timer (onTimeout, this, Timeout.Infinite, Timeout.Infinite);
+
       init ();
     }
 
@@ -146,7 +136,7 @@ namespace WebSocketSharp.Net
       }
     }
 
-    public ListenerPrefix Prefix {
+    public HttpListenerPrefix Prefix {
       get {
         return _prefix;
       }
@@ -178,26 +168,72 @@ namespace WebSocketSharp.Net
 
     #region Private Methods
 
+    private void close ()
+    {
+      lock (_sync) {
+        if (_socket == null)
+          return;
+
+        disposeTimer ();
+        disposeRequestBuffer ();
+        disposeStream ();
+        closeSocket ();
+      }
+
+      unbind ();
+      removeConnection ();
+    }
+
     private void closeSocket ()
     {
-      if (_socket == null)
-        return;
-
       try {
-        _socket.Close ();
+        _socket.Shutdown (SocketShutdown.Both);
       }
       catch {
       }
-      finally {
-        _socket = null;
+
+      _socket.Close ();
+      _socket = null;
+    }
+
+    private void disposeRequestBuffer ()
+    {
+      if (_requestBuffer == null)
+        return;
+
+      _requestBuffer.Dispose ();
+      _requestBuffer = null;
+    }
+
+    private void disposeStream ()
+    {
+      if (_stream == null)
+        return;
+
+      _inputStream = null;
+      _outputStream = null;
+
+      _stream.Dispose ();
+      _stream = null;
+    }
+
+    private void disposeTimer ()
+    {
+      if (_timer == null)
+        return;
+
+      try {
+        _timer.Change (Timeout.Infinite, Timeout.Infinite);
+      }
+      catch {
       }
 
-      removeConnection ();
+      _timer.Dispose ();
+      _timer = null;
     }
 
     private void init ()
     {
-      _chunked = false;
       _context = new HttpListenerContext (this);
       _inputState = InputState.RequestLine;
       _inputStream = null;
@@ -211,96 +247,91 @@ namespace WebSocketSharp.Net
     private static void onRead (IAsyncResult asyncResult)
     {
       var conn = (HttpConnection) asyncResult.AsyncState;
-      conn.onReadInternal (asyncResult);
+      if (conn._socket == null)
+        return;
+
+      lock (conn._sync) {
+        if (conn._socket == null)
+          return;
+
+        var nread = -1;
+        var len = 0;
+        try {
+          conn._timer.Change (Timeout.Infinite, Timeout.Infinite);
+          nread = conn._stream.EndRead (asyncResult);
+          conn._requestBuffer.Write (conn._buffer, 0, nread);
+          len = (int) conn._requestBuffer.Length;
+        }
+        catch (Exception ex) {
+          if (conn._requestBuffer != null && conn._requestBuffer.Length > 0) {
+            conn.SendError (ex.Message, 400);
+            return;
+          }
+
+          conn.close ();
+          return;
+        }
+
+        if (nread <= 0) {
+          conn.close ();
+          return;
+        }
+
+        if (conn.processInput (conn._requestBuffer.GetBuffer (), len)) {
+          if (!conn._context.HasError)
+            conn._context.Request.FinishInitialization ();
+
+          if (conn._context.HasError) {
+            conn.SendError ();
+            return;
+          }
+
+          if (!conn._listener.BindContext (conn._context)) {
+            conn.SendError ("Invalid host", 400);
+            return;
+          }
+
+          var lsnr = conn._context.Listener;
+          if (conn._lastListener != lsnr) {
+            conn.removeConnection ();
+            lsnr.AddConnection (conn);
+            conn._lastListener = lsnr;
+          }
+
+          conn._contextBound = true;
+          lsnr.RegisterContext (conn._context);
+
+          return;
+        }
+
+        conn._stream.BeginRead (conn._buffer, 0, _bufferLength, onRead, conn);
+      }
     }
 
-    private void onReadInternal (IAsyncResult asyncResult)
+    private static void onTimeout (object state)
     {
-      _timer.Change (Timeout.Infinite, Timeout.Infinite);
-
-      var read = -1;
-      try {
-        read = _stream.EndRead (asyncResult);
-        _requestBuffer.Write (_buffer, 0, read);
-        if (_requestBuffer.Length > 32768) {
-          SendError ();
-          Close (true);
-
-          return;
-        }
-      }
-      catch {
-        if (_requestBuffer != null && _requestBuffer.Length > 0)
-          SendError ();
-
-        if (_socket != null) {
-          closeSocket ();
-          unbind ();
-        }
-
-        return;
-      }
-
-      if (read <= 0) {
-        closeSocket ();
-        unbind ();
-
-        return;
-      }
-
-      if (processInput (_requestBuffer.GetBuffer ())) {
-        if (!_context.HaveError)
-          _context.Request.FinishInitialization ();
-        else {
-          SendError ();
-          Close (true);
-
-          return;
-        }
-
-        if (!_epListener.BindContext (_context)) {
-          SendError ("Invalid host", 400);
-          Close (true);
-
-          return;
-        }
-
-        var listener = _context.Listener;
-        if (_lastListener != listener) {
-          removeConnection ();
-          listener.AddConnection (this);
-          _lastListener = listener;
-        }
-
-        _contextWasBound = true;
-        listener.RegisterContext (_context);
-
-        return;
-      }
-
-      _stream.BeginRead (_buffer, 0, _bufferSize, onRead, this);
-    }
-
-    private void onTimeout (object unused)
-    {
-      closeSocket ();
-      unbind ();
+      var conn = (HttpConnection) state;
+      conn.close ();
     }
 
     // true -> Done processing.
     // false -> Need more input.
-    private bool processInput (byte [] data)
+    private bool processInput (byte[] data, int length)
     {
-      var length = data.Length;
-      var used = 0;
-      string line;
+      if (_currentLine == null)
+        _currentLine = new StringBuilder (64);
+
+      var nread = 0;
       try {
-        while ((line = readLine (
-          data, _position, length - _position, ref used)) != null) {
-          _position += used;
+        string line;
+        while ((line = readLineFrom (data, _position, length, out nread)) != null) {
+          _position += nread;
           if (line.Length == 0) {
             if (_inputState == InputState.RequestLine)
               continue;
+
+            if (_position > 32768)
+              _context.ErrorMessage = "Headers too long";
 
             _currentLine = null;
             return true;
@@ -314,7 +345,7 @@ namespace WebSocketSharp.Net
             _context.Request.AddHeader (line);
           }
 
-          if (_context.HaveError)
+          if (_context.HasError)
             return true;
         }
       }
@@ -323,61 +354,55 @@ namespace WebSocketSharp.Net
         return true;
       }
 
-      _position += used;
-      if (used == length) {
-        _requestBuffer.SetLength (0);
-        _position = 0;
+      _position += nread;
+      if (_position >= 32768) {
+        _context.ErrorMessage = "Headers too long";
+        return true;
       }
 
       return false;
     }
 
-    private string readLine (
-      byte [] buffer, int offset, int length, ref int used)
+    private string readLineFrom (byte[] buffer, int offset, int length, out int read)
     {
-      if (_currentLine == null)
-        _currentLine = new StringBuilder ();
-
-      var last = offset + length;
-      used = 0;
-      for (int i = offset; i < last && _lineState != LineState.LF; i++) {
-        used++;
-        var b = buffer [i];
-        if (b == 13) {
-          _lineState = LineState.CR;
-        }
-        else if (b == 10) {
-          _lineState = LineState.LF;
-        }
-        else {
+      read = 0;
+      for (var i = offset; i < length && _lineState != LineState.Lf; i++) {
+        read++;
+        var b = buffer[i];
+        if (b == 13)
+          _lineState = LineState.Cr;
+        else if (b == 10)
+          _lineState = LineState.Lf;
+        else
           _currentLine.Append ((char) b);
-        }
       }
 
-      string result = null;
-      if (_lineState == LineState.LF) {
+      if (_lineState == LineState.Lf) {
         _lineState = LineState.None;
-        result = _currentLine.ToString ();
+        var line = _currentLine.ToString ();
         _currentLine.Length = 0;
+
+        return line;
       }
 
-      return result;
+      return null;
     }
 
     private void removeConnection ()
     {
-      if (_lastListener == null)
-        _epListener.RemoveConnection (this);
-      else
+      if (_lastListener != null)
         _lastListener.RemoveConnection (this);
+      else
+        _listener.RemoveConnection (this);
     }
 
     private void unbind ()
     {
-      if (_contextWasBound) {
-        _epListener.UnbindContext (_context);
-        _contextWasBound = false;
-      }
+      if (!_contextBound)
+        return;
+
+      _listener.UnbindContext (_context);
+      _contextBound = false;
     }
 
     #endregion
@@ -386,46 +411,31 @@ namespace WebSocketSharp.Net
 
     internal void Close (bool force)
     {
-      if (_socket != null) {
-        if (_outputStream != null) {
-          _outputStream.Close ();
-          _outputStream = null;
-        }
-
-        var req = _context.Request;
-        var res = _context.Response;
-        force |= !req.KeepAlive;
-        if (!force)
-          force = res.Headers ["Connection"] == "close";
-
-        if (!force &&
-            req.FlushInput () &&
-            (!_chunked || (_chunked && !res.ForceCloseChunked))) {
-          // Don't close. Keep working.
-          _reuses++;
-          unbind ();
-          init ();
-          BeginReadRequest ();
-
-          return;
-        }
-
-        var socket = _socket;
-        _socket = null;
-        try {
-          socket.Shutdown (SocketShutdown.Both);
-        }
-        catch {
-        }
-        finally {
-          if (socket != null)
-            socket.Close ();
-        }
-
-        unbind ();
-        removeConnection ();
-
+      if (_socket == null)
         return;
+
+      lock (_sync) {
+        if (_socket == null)
+          return;
+
+        if (!force) {
+          GetResponseStream ().Close (false);
+          if (!_context.Response.CloseConnection && _context.Request.FlushInput ()) {
+            // Don't close. Keep working.
+            _reuses++;
+            disposeRequestBuffer ();
+            unbind ();
+            init ();
+            BeginReadRequest ();
+
+            return;
+          }
+        }
+        else if (_outputStream != null) {
+          _outputStream.Close (true);
+        }
+
+        close ();
       }
     }
 
@@ -436,19 +446,17 @@ namespace WebSocketSharp.Net
     public void BeginReadRequest ()
     {
       if (_buffer == null)
-        _buffer = new byte [_bufferSize];
+        _buffer = new byte[_bufferLength];
+
+      if (_reuses == 1)
+        _timeout = 15000;
 
       try {
-        if (_reuses == 1)
-          _timeout = 15000;
-
         _timer.Change (_timeout, Timeout.Infinite);
-        _stream.BeginRead (_buffer, 0, _bufferSize, onRead, this);
+        _stream.BeginRead (_buffer, 0, _bufferLength, onRead, this);
       }
       catch {
-        _timer.Change (Timeout.Infinite, Timeout.Infinite);
-        closeSocket ();
-        unbind ();
+        close ();
       }
     }
 
@@ -457,38 +465,49 @@ namespace WebSocketSharp.Net
       Close (false);
     }
 
-    public RequestStream GetRequestStream (bool chunked, long contentlength)
+    public RequestStream GetRequestStream (long contentLength, bool chunked)
     {
-      if (_inputStream == null) {
-        var buffer = _requestBuffer.GetBuffer ();
-        var length = buffer.Length;
+      if (_inputStream != null || _socket == null)
+        return _inputStream;
 
-        _requestBuffer = null;
+      lock (_sync) {
+        if (_socket == null)
+          return _inputStream;
+
+        var buff = _requestBuffer.GetBuffer ();
+        var len = (int) _requestBuffer.Length;
+        disposeRequestBuffer ();
         if (chunked) {
-          _chunked = true;
           _context.Response.SendChunked = true;
-          _inputStream = new ChunkedInputStream (
-            _context, _stream, buffer, _position, length - _position);
+          _inputStream = new ChunkedRequestStream (
+            _stream, buff, _position, len - _position, _context);
         }
         else {
           _inputStream = new RequestStream (
-            _stream, buffer, _position, length - _position, contentlength);
+            _stream, buff, _position, len - _position, contentLength);
         }
-      }
 
-      return _inputStream;
+        return _inputStream;
+      }
     }
 
     public ResponseStream GetResponseStream ()
     {
       // TODO: Can we get this stream before reading the input?
-      if (_outputStream == null) {
-        var listener = _context.Listener;
-        var ignore = listener == null ? true : listener.IgnoreWriteExceptions;
-        _outputStream = new ResponseStream (_stream, _context.Response, ignore);
-      }
 
-      return _outputStream;
+      if (_outputStream != null || _socket == null)
+        return _outputStream;
+
+      lock (_sync) {
+        if (_socket == null)
+          return _outputStream;
+
+        var lsnr = _context.Listener;
+        var ignore = lsnr != null ? lsnr.IgnoreWriteExceptions : true;
+        _outputStream = new ResponseStream (_stream, _context.Response, ignore);
+
+        return _outputStream;
+      }
     }
 
     public void SendError ()
@@ -498,21 +517,35 @@ namespace WebSocketSharp.Net
 
     public void SendError (string message, int status)
     {
-      try {
-        var res = _context.Response;
-        res.StatusCode = status;
-        res.ContentType = "text/html";
+      if (_socket == null)
+        return;
 
-        var description = status.GetStatusDescription ();
-        var error = message != null && message.Length > 0
-                  ? String.Format ("<h1>{0} ({1})</h1>", description, message)
-                  : String.Format ("<h1>{0}</h1>", description);
+      lock (_sync) {
+        if (_socket == null)
+          return;
 
-        var entity = res.ContentEncoding.GetBytes (error);
-        res.Close (entity, false);
-      }
-      catch {
-        // Response was already closed.
+        try {
+          var res = _context.Response;
+          res.StatusCode = status;
+          res.ContentType = "text/html";
+
+          var content = new StringBuilder (64);
+          content.AppendFormat ("<html><body><h1>{0} {1}", status, res.StatusDescription);
+          if (message != null && message.Length > 0)
+            content.AppendFormat (" ({0})</h1></body></html>", message);
+          else
+            content.Append ("</h1></body></html>");
+
+          var enc = Encoding.UTF8;
+          var entity = enc.GetBytes (content.ToString ());
+          res.ContentEncoding = enc;
+          res.ContentLength64 = entity.LongLength;
+
+          res.Close (entity, true);
+        }
+        catch {
+          Close (true);
+        }
       }
     }
 

@@ -4,8 +4,8 @@
  *
  * The MIT License
  *
- * Copyright (c) 2012-2013 sta.blockhead
- * 
+ * Copyright (c) 2012-2015 sta.blockhead
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -15,7 +15,7 @@
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,40 +28,40 @@
 
 using System;
 
-namespace WebSocketSharp {
-
+namespace WebSocketSharp
+{
   /// <summary>
-  /// Contains the values of the opcodes that denotes the frame type of the WebSocket frame.
+  /// Indicates the WebSocket frame type.
   /// </summary>
   /// <remarks>
-  /// The <b>Opcode</b> enumeration contains the values of the opcodes defined in
-  /// <see href="http://tools.ietf.org/html/rfc6455#section-5.2">RFC 6455</see> for the WebSocket protocol.
+  /// The values of this enumeration are defined in
+  /// <see href="http://tools.ietf.org/html/rfc6455#section-5.2">Section 5.2</see> of RFC 6455.
   /// </remarks>
   public enum Opcode : byte
   {
     /// <summary>
-    /// Equivalent to numeric value 0. Indicates a continuation frame.
+    /// Equivalent to numeric value 0. Indicates continuation frame.
     /// </summary>
-    CONT = 0x0,
+    Cont = 0x0,
     /// <summary>
-    /// Equivalent to numeric value 1. Indicates a text frame.
+    /// Equivalent to numeric value 1. Indicates text frame.
     /// </summary>
-    TEXT = 0x1,
+    Text = 0x1,
     /// <summary>
-    /// Equivalent to numeric value 2. Indicates a binary frame.
+    /// Equivalent to numeric value 2. Indicates binary frame.
     /// </summary>
-    BINARY = 0x2,
+    Binary = 0x2,
     /// <summary>
-    /// Equivalent to numeric value 8. Indicates a connection close frame.
+    /// Equivalent to numeric value 8. Indicates connection close frame.
     /// </summary>
-    CLOSE = 0x8,
+    Close = 0x8,
     /// <summary>
-    /// Equivalent to numeric value 9. Indicates a ping frame.
+    /// Equivalent to numeric value 9. Indicates ping frame.
     /// </summary>
-    PING = 0x9,
+    Ping = 0x9,
     /// <summary>
-    /// Equivalent to numeric value 10. Indicates a pong frame.
+    /// Equivalent to numeric value 10. Indicates pong frame.
     /// </summary>
-    PONG = 0xa
+    Pong = 0xa
   }
 }

@@ -4,7 +4,7 @@
  *
  * The MIT License
  *
- * Copyright (c) 2012-2013 sta.blockhead
+ * Copyright (c) 2012-2015 sta.blockhead
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,43 +29,45 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.IO;
 using System.Security.Principal;
 
 namespace WebSocketSharp.Net.WebSockets
 {
   /// <summary>
-  /// Provides access to the WebSocket connection request information received by
-  /// the <see cref="HttpListener"/>.
+  /// Provides the properties used to access the information in a WebSocket connection request
+  /// received by the <see cref="HttpListener"/>.
   /// </summary>
-  /// <remarks>
-  /// </remarks>
   public class HttpListenerWebSocketContext : WebSocketContext
   {
     #region Private Fields
 
     private HttpListenerContext _context;
     private WebSocket           _websocket;
-    private WsStream            _stream;
 
     #endregion
 
     #region Internal Constructors
 
-    internal HttpListenerWebSocketContext (
-      HttpListenerContext context, Logger logger)
+    internal HttpListenerWebSocketContext (HttpListenerContext context, string protocol)
     {
       _context = context;
-      _stream = WsStream.CreateServerStream (context);
-      _websocket = new WebSocket (this, logger ?? new Logger ());
+      _websocket = new WebSocket (this, protocol);
     }
 
     #endregion
 
     #region Internal Properties
 
-    internal WsStream Stream {
+    internal Logger Log {
       get {
-        return _stream;
+        return _context.Listener.Log;
+      }
+    }
+
+    internal Stream Stream {
+      get {
+        return _context.Connection.Stream;
       }
     }
 
@@ -74,11 +76,10 @@ namespace WebSocketSharp.Net.WebSockets
     #region Public Properties
 
     /// <summary>
-    /// Gets the cookies used in the WebSocket connection request.
+    /// Gets the HTTP cookies included in the request.
     /// </summary>
     /// <value>
-    /// A <see cref="WebSocketSharp.Net.CookieCollection"/> that contains the
-    /// cookies.
+    /// A <see cref="WebSocketSharp.Net.CookieCollection"/> that contains the cookies.
     /// </value>
     public override CookieCollection CookieCollection {
       get {
@@ -87,10 +88,10 @@ namespace WebSocketSharp.Net.WebSockets
     }
 
     /// <summary>
-    /// Gets the HTTP headers used in the WebSocket connection request.
+    /// Gets the HTTP headers included in the request.
     /// </summary>
     /// <value>
-    /// A <see cref="NameValueCollection"/> that contains the HTTP headers.
+    /// A <see cref="NameValueCollection"/> that contains the headers.
     /// </value>
     public override NameValueCollection Headers {
       get {
@@ -99,15 +100,14 @@ namespace WebSocketSharp.Net.WebSockets
     }
 
     /// <summary>
-    /// Gets the value of the Host header field used in the WebSocket connection
-    /// request.
+    /// Gets the value of the Host header included in the request.
     /// </summary>
     /// <value>
-    /// A <see cref="string"/> that represents the value of the Host header field.
+    /// A <see cref="string"/> that represents the value of the Host header.
     /// </value>
     public override string Host {
       get {
-        return _context.Request.Headers ["Host"];
+        return _context.Request.Headers["Host"];
       }
     }
 
@@ -119,17 +119,15 @@ namespace WebSocketSharp.Net.WebSockets
     /// </value>
     public override bool IsAuthenticated {
       get {
-        return _context.Request.IsAuthenticated;
+        return _context.User != null;
       }
     }
 
     /// <summary>
-    /// Gets a value indicating whether the client connected from the local
-    /// computer.
+    /// Gets a value indicating whether the client connected from the local computer.
     /// </summary>
     /// <value>
-    /// <c>true</c> if the client connected from the local computer; otherwise,
-    /// <c>false</c>.
+    /// <c>true</c> if the client connected from the local computer; otherwise, <c>false</c>.
     /// </value>
     public override bool IsLocal {
       get {
@@ -141,22 +139,19 @@ namespace WebSocketSharp.Net.WebSockets
     /// Gets a value indicating whether the WebSocket connection is secured.
     /// </summary>
     /// <value>
-    /// <c>true</c> if the WebSocket connection is secured; otherwise,
-    /// <c>false</c>.
+    /// <c>true</c> if the connection is secured; otherwise, <c>false</c>.
     /// </value>
     public override bool IsSecureConnection {
       get {
-        return _context.Request.IsSecureConnection;
+        return _context.Connection.IsSecure;
       }
     }
 
     /// <summary>
-    /// Gets a value indicating whether the request is a WebSocket connection
-    /// request.
+    /// Gets a value indicating whether the request is a WebSocket connection request.
     /// </summary>
     /// <value>
-    /// <c>true</c> if the request is a WebSocket connection request; otherwise,
-    /// <c>false</c>.
+    /// <c>true</c> if the request is a WebSocket connection request; otherwise, <c>false</c>.
     /// </value>
     public override bool IsWebSocketRequest {
       get {
@@ -165,39 +160,22 @@ namespace WebSocketSharp.Net.WebSockets
     }
 
     /// <summary>
-    /// Gets the value of the Origin header field used in the WebSocket
-    /// connection request.
+    /// Gets the value of the Origin header included in the request.
     /// </summary>
     /// <value>
-    /// A <see cref="string"/> that represents the value of the Origin header
-    /// field.
+    /// A <see cref="string"/> that represents the value of the Origin header.
     /// </value>
     public override string Origin {
       get {
-        return _context.Request.Headers ["Origin"];
+        return _context.Request.Headers["Origin"];
       }
     }
 
     /// <summary>
-    /// Gets the absolute path of the requested WebSocket URI.
+    /// Gets the query string included in the request.
     /// </summary>
     /// <value>
-    /// A <see cref="string"/> that represents the absolute path of the requested
-    /// WebSocket URI.
-    /// </value>
-    public override string Path {
-      get {
-        return _context.Request.Url.GetAbsolutePath ();
-      }
-    }
-
-    /// <summary>
-    /// Gets the collection of query string variables used in the WebSocket
-    /// connection request.
-    /// </summary>
-    /// <value>
-    /// A <see cref="NameValueCollection"/> that contains the collection of query
-    /// string variables.
+    /// A <see cref="NameValueCollection"/> that contains the query string parameters.
     /// </value>
     public override NameValueCollection QueryString {
       get {
@@ -206,11 +184,10 @@ namespace WebSocketSharp.Net.WebSockets
     }
 
     /// <summary>
-    /// Gets the WebSocket URI requested by the client.
+    /// Gets the URI requested by the client.
     /// </summary>
     /// <value>
-    /// A <see cref="Uri"/> that represents the WebSocket URI requested by the
-    /// client.
+    /// A <see cref="Uri"/> that represents the requested URI.
     /// </value>
     public override Uri RequestUri {
       get {
@@ -219,54 +196,53 @@ namespace WebSocketSharp.Net.WebSockets
     }
 
     /// <summary>
-    /// Gets the value of the Sec-WebSocket-Key header field used in the
-    /// WebSocket connection request.
+    /// Gets the value of the Sec-WebSocket-Key header included in the request.
     /// </summary>
     /// <remarks>
-    /// This property provides a part of the information used by the server to
-    /// prove that it received a valid WebSocket connection request.
+    /// This property provides a part of the information used by the server to prove that it
+    /// received a valid WebSocket connection request.
     /// </remarks>
     /// <value>
-    /// A <see cref="string"/> that represents the value of the Sec-WebSocket-Key
-    /// header field.
+    /// A <see cref="string"/> that represents the value of the Sec-WebSocket-Key header.
     /// </value>
     public override string SecWebSocketKey {
       get {
-        return _context.Request.Headers ["Sec-WebSocket-Key"];
+        return _context.Request.Headers["Sec-WebSocket-Key"];
       }
     }
 
     /// <summary>
-    /// Gets the values of the Sec-WebSocket-Protocol header field used in the
-    /// WebSocket connection request.
+    /// Gets the values of the Sec-WebSocket-Protocol header included in the request.
     /// </summary>
     /// <remarks>
-    /// This property represents the subprotocols of the WebSocket connection.
+    /// This property represents the subprotocols requested by the client.
     /// </remarks>
     /// <value>
-    /// An IEnumerable&lt;string&gt; that contains the values of the
-    /// Sec-WebSocket-Protocol header field.
+    /// An <see cref="T:System.Collections.Generic.IEnumerable{string}"/> instance that provides
+    /// an enumerator which supports the iteration over the values of the Sec-WebSocket-Protocol
+    /// header.
     /// </value>
     public override IEnumerable<string> SecWebSocketProtocols {
       get {
-        return _context.Request.Headers.GetValues ("Sec-WebSocket-Protocol");
+        var protocols = _context.Request.Headers["Sec-WebSocket-Protocol"];
+        if (protocols != null)
+          foreach (var protocol in protocols.Split (','))
+            yield return protocol.Trim ();
       }
     }
 
     /// <summary>
-    /// Gets the value of the Sec-WebSocket-Version header field used in the
-    /// WebSocket connection request.
+    /// Gets the value of the Sec-WebSocket-Version header included in the request.
     /// </summary>
     /// <remarks>
-    /// This property represents the WebSocket protocol version of the connection.
+    /// This property represents the WebSocket protocol version.
     /// </remarks>
     /// <value>
-    /// A <see cref="string"/> that represents the value of the
-    /// Sec-WebSocket-Version header field.
+    /// A <see cref="string"/> that represents the value of the Sec-WebSocket-Version header.
     /// </value>
     public override string SecWebSocketVersion {
       get {
-        return _context.Request.Headers ["Sec-WebSocket-Version"];
+        return _context.Request.Headers["Sec-WebSocket-Version"];
       }
     }
 
@@ -283,11 +259,10 @@ namespace WebSocketSharp.Net.WebSockets
     }
 
     /// <summary>
-    /// Gets the client information (identity, authentication information and
-    /// security roles).
+    /// Gets the client information (identity, authentication, and security roles).
     /// </summary>
     /// <value>
-    /// A <see cref="IPrincipal"/> that represents the client information.
+    /// A <see cref="IPrincipal"/> instance that represents the client information.
     /// </value>
     public override IPrincipal User {
       get {
@@ -308,8 +283,8 @@ namespace WebSocketSharp.Net.WebSockets
     }
 
     /// <summary>
-    /// Gets the WebSocket instance used for two-way communication between client
-    /// and server.
+    /// Gets the <see cref="WebSocketSharp.WebSocket"/> instance used for two-way communication
+    /// between client and server.
     /// </summary>
     /// <value>
     /// A <see cref="WebSocketSharp.WebSocket"/>.

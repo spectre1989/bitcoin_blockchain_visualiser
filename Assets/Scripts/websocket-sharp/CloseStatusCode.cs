@@ -4,7 +4,7 @@
  *
  * The MIT License
  *
- * Copyright (c) 2012-2014 sta.blockhead
+ * Copyright (c) 2012-2015 sta.blockhead
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,100 +31,85 @@ using System;
 namespace WebSocketSharp
 {
   /// <summary>
-  /// Contains the values of the status codes for the WebSocket connection
-  /// closure.
+  /// Indicates the status code for the WebSocket connection close.
   /// </summary>
   /// <remarks>
   ///   <para>
-  ///   The CloseStatusCode enumeration contains the values of the status codes
-  ///   for the WebSocket connection closure defined in
-  ///   <a href="http://tools.ietf.org/html/rfc6455#section-7.4.1">RFC 6455</a>
-  ///   for the WebSocket protocol.
+  ///   The values of this enumeration are defined in
+  ///   <see href="http://tools.ietf.org/html/rfc6455#section-7.4">Section 7.4</see> of RFC 6455.
   ///   </para>
   ///   <para>
-  ///   "Reserved value" must not be set as a status code in a close control frame
-  ///   by an endpoint. It's designated for use in applications expecting a status
-  ///   code to indicate that the connection was closed due to a system grounds.
+  ///   "Reserved value" must not be set as a status code in a connection close frame by
+  ///   an endpoint. It's designated for use in applications expecting a status code to
+  ///   indicate that the connection was closed due to the system grounds.
   ///   </para>
   /// </remarks>
   public enum CloseStatusCode : ushort
   {
     /// <summary>
-    /// Equivalent to close status 1000.
-    /// Indicates a normal closure.
+    /// Equivalent to close status 1000. Indicates normal close.
     /// </summary>
-    NORMAL = 1000,
+    Normal = 1000,
     /// <summary>
-    /// Equivalent to close status 1001.
-    /// Indicates that an endpoint is "going away".
+    /// Equivalent to close status 1001. Indicates that an endpoint is going away.
     /// </summary>
-    AWAY = 1001,
+    Away = 1001,
     /// <summary>
-    /// Equivalent to close status 1002.
-    /// Indicates that an endpoint is terminating the connection due to a protocol
-    /// error.
+    /// Equivalent to close status 1002. Indicates that an endpoint is terminating
+    /// the connection due to a protocol error.
     /// </summary>
-    PROTOCOL_ERROR = 1002,
+    ProtocolError = 1002,
     /// <summary>
-    /// Equivalent to close status 1003.
-    /// Indicates that an endpoint is terminating the connection because it has
-    /// received a type of data it cannot accept.
+    /// Equivalent to close status 1003. Indicates that an endpoint is terminating
+    /// the connection because it has received a type of data that it cannot accept.
     /// </summary>
-    INCORRECT_DATA = 1003,
+    UnsupportedData = 1003,
     /// <summary>
-    /// Equivalent to close status 1004.
-    /// Still undefined. Reserved value.
+    /// Equivalent to close status 1004. Still undefined. A Reserved value.
     /// </summary>
-    UNDEFINED = 1004,
+    Undefined = 1004,
     /// <summary>
-    /// Equivalent to close status 1005.
-    /// Indicates that no status code was actually present. Reserved value.
+    /// Equivalent to close status 1005. Indicates that no status code was actually present.
+    /// A Reserved value.
     /// </summary>
-    NO_STATUS_CODE = 1005,
+    NoStatus = 1005,
     /// <summary>
-    /// Equivalent to close status 1006.
-    /// Indicates that the connection was closed abnormally. Reserved value.
+    /// Equivalent to close status 1006. Indicates that the connection was closed abnormally.
+    /// A Reserved value.
     /// </summary>
-    ABNORMAL = 1006,
+    Abnormal = 1006,
     /// <summary>
-    /// Equivalent to close status 1007.
-    /// Indicates that an endpoint is terminating the connection because it has
-    /// received the data within a message that wasn't consistent with the type of
-    /// the message.
+    /// Equivalent to close status 1007. Indicates that an endpoint is terminating
+    /// the connection because it has received a message that contains data that
+    /// isn't consistent with the type of the message.
     /// </summary>
-    INCONSISTENT_DATA = 1007,
+    InvalidData = 1007,
     /// <summary>
-    /// Equivalent to close status 1008.
-    /// Indicates that an endpoint is terminating the connection because it has
-    /// received a message that violates its policy.
+    /// Equivalent to close status 1008. Indicates that an endpoint is terminating
+    /// the connection because it has received a message that violates its policy.
     /// </summary>
-    POLICY_VIOLATION = 1008,
+    PolicyViolation = 1008,
     /// <summary>
-    /// Equivalent to close status 1009.
-    /// Indicates that an endpoint is terminating the connection because it has
-    /// received a message that is too big to process.
+    /// Equivalent to close status 1009. Indicates that an endpoint is terminating
+    /// the connection because it has received a message that is too big to process.
     /// </summary>
-    TOO_BIG = 1009,
+    TooBig = 1009,
     /// <summary>
-    /// Equivalent to close status 1010.
-    /// Indicates that an endpoint (client) is terminating the connection because
-    /// it has expected the server to negotiate one or more extension, but the
-    /// server didn't return them in the response message of the WebSocket
-    /// handshake.
+    /// Equivalent to close status 1010. Indicates that a client is terminating
+    /// the connection because it has expected the server to negotiate one or more extension,
+    /// but the server didn't return them in the handshake response.
     /// </summary>
-    IGNORE_EXTENSION = 1010,
+    MandatoryExtension = 1010,
     /// <summary>
-    /// Equivalent to close status 1011.
-    /// Indicates that the server is terminating the connection because it has
-    /// encountered an unexpected condition that prevented it from fulfilling the
-    /// request.
+    /// Equivalent to close status 1011. Indicates that a server is terminating
+    /// the connection because it has encountered an unexpected condition that
+    /// prevented it from fulfilling the request.
     /// </summary>
-    SERVER_ERROR = 1011,
+    ServerError = 1011,
     /// <summary>
-    /// Equivalent to close status 1015.
-    /// Indicates that the connection was closed due to a failure to perform a TLS
-    /// handshake. Reserved value.
+    /// Equivalent to close status 1015. Indicates that the connection was closed
+    /// due to a failure to perform a TLS handshake. A Reserved value.
     /// </summary>
-    TLS_HANDSHAKE_FAILURE = 1015
+    TlsHandshakeFailure = 1015
   }
 }

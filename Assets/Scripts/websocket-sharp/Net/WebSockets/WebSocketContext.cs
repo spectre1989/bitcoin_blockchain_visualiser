@@ -4,7 +4,7 @@
  *
  * The MIT License
  *
- * Copyright (c) 2012-2013 sta.blockhead
+ * Copyright (c) 2012-2014 sta.blockhead
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@ using System.Security.Principal;
 namespace WebSocketSharp.Net.WebSockets
 {
   /// <summary>
-  /// Provides access to the WebSocket connection request information.
+  /// Exposes the properties used to access the information in a WebSocket connection request.
   /// </summary>
   /// <remarks>
   /// The WebSocketContext class is an abstract class.
@@ -55,28 +55,26 @@ namespace WebSocketSharp.Net.WebSockets
     #region Public Properties
 
     /// <summary>
-    /// Gets the cookies used in the WebSocket connection request.
+    /// Gets the HTTP cookies included in the request.
     /// </summary>
     /// <value>
-    /// A <see cref="WebSocketSharp.Net.CookieCollection"/> that contains the
-    /// cookies.
+    /// A <see cref="WebSocketSharp.Net.CookieCollection"/> that contains the cookies.
     /// </value>
     public abstract CookieCollection CookieCollection { get; }
 
     /// <summary>
-    /// Gets the HTTP headers used in the WebSocket connection request.
+    /// Gets the HTTP headers included in the request.
     /// </summary>
     /// <value>
-    /// A <see cref="NameValueCollection"/> that contains the HTTP headers.
+    /// A <see cref="NameValueCollection"/> that contains the headers.
     /// </value>
     public abstract NameValueCollection Headers { get; }
 
     /// <summary>
-    /// Gets the value of the Host header field used in the WebSocket connection
-    /// request.
+    /// Gets the value of the Host header included in the request.
     /// </summary>
     /// <value>
-    /// A <see cref="string"/> that represents the value of the Host header field.
+    /// A <see cref="string"/> that represents the value of the Host header.
     /// </value>
     public abstract string Host { get; }
 
@@ -89,12 +87,10 @@ namespace WebSocketSharp.Net.WebSockets
     public abstract bool IsAuthenticated { get; }
 
     /// <summary>
-    /// Gets a value indicating whether the client connected from the local
-    /// computer.
+    /// Gets a value indicating whether the client connected from the local computer.
     /// </summary>
     /// <value>
-    /// <c>true</c> if the client connected from the local computer; otherwise,
-    /// <c>false</c>.
+    /// <c>true</c> if the client connected from the local computer; otherwise, <c>false</c>.
     /// </value>
     public abstract bool IsLocal { get; }
 
@@ -102,95 +98,75 @@ namespace WebSocketSharp.Net.WebSockets
     /// Gets a value indicating whether the WebSocket connection is secured.
     /// </summary>
     /// <value>
-    /// <c>true</c> if the WebSocket connection is secured; otherwise,
-    /// <c>false</c>.
+    /// <c>true</c> if the connection is secured; otherwise, <c>false</c>.
     /// </value>
     public abstract bool IsSecureConnection { get; }
 
     /// <summary>
-    /// Gets a value indicating whether the request is a WebSocket connection
-    /// request.
+    /// Gets a value indicating whether the request is a WebSocket connection request.
     /// </summary>
     /// <value>
-    /// <c>true</c> if the request is a WebSocket connection request; otherwise,
-    /// <c>false</c>.
+    /// <c>true</c> if the request is a WebSocket connection request; otherwise, <c>false</c>.
     /// </value>
     public abstract bool IsWebSocketRequest { get; }
 
     /// <summary>
-    /// Gets the value of the Origin header field used in the WebSocket
-    /// connection request.
+    /// Gets the value of the Origin header included in the request.
     /// </summary>
     /// <value>
-    /// A <see cref="string"/> that represents the value of the Origin header
-    /// field.
+    /// A <see cref="string"/> that represents the value of the Origin header.
     /// </value>
     public abstract string Origin { get; }
 
     /// <summary>
-    /// Gets the absolute path of the requested WebSocket URI.
+    /// Gets the query string included in the request.
     /// </summary>
     /// <value>
-    /// A <see cref="string"/> that represents the absolute path of the requested
-    /// WebSocket URI.
-    /// </value>
-    public abstract string Path { get; }
-
-    /// <summary>
-    /// Gets the collection of query string variables used in the WebSocket
-    /// connection request.
-    /// </summary>
-    /// <value>
-    /// A <see cref="NameValueCollection"/> that contains the collection of query
-    /// string variables.
+    /// A <see cref="NameValueCollection"/> that contains the query string parameters.
     /// </value>
     public abstract NameValueCollection QueryString { get; }
 
     /// <summary>
-    /// Gets the WebSocket URI requested by the client.
+    /// Gets the URI requested by the client.
     /// </summary>
     /// <value>
-    /// A <see cref="Uri"/> that represents the WebSocket URI.
+    /// A <see cref="Uri"/> that represents the requested URI.
     /// </value>
     public abstract Uri RequestUri { get; }
 
     /// <summary>
-    /// Gets the value of the Sec-WebSocket-Key header field used in the
-    /// WebSocket connection request.
+    /// Gets the value of the Sec-WebSocket-Key header included in the request.
     /// </summary>
     /// <remarks>
-    /// This property provides a part of the information used by the server to
-    /// prove that it received a valid WebSocket connection request.
+    /// This property provides a part of the information used by the server to prove that it
+    /// received a valid WebSocket connection request.
     /// </remarks>
     /// <value>
-    /// A <see cref="string"/> that represents the value of the Sec-WebSocket-Key
-    /// header field.
+    /// A <see cref="string"/> that represents the value of the Sec-WebSocket-Key header.
     /// </value>
     public abstract string SecWebSocketKey { get; }
 
     /// <summary>
-    /// Gets the values of the Sec-WebSocket-Protocol header field used in the
-    /// WebSocket connection request.
+    /// Gets the values of the Sec-WebSocket-Protocol header included in the request.
     /// </summary>
     /// <remarks>
-    /// This property represents the subprotocols of the WebSocket connection.
+    /// This property represents the subprotocols requested by the client.
     /// </remarks>
     /// <value>
-    /// An IEnumerable&lt;string&gt; that contains the values of the
-    /// Sec-WebSocket-Protocol header field.
+    /// An <see cref="T:System.Collections.Generic.IEnumerable{string}"/> instance that provides
+    /// an enumerator which supports the iteration over the values of the Sec-WebSocket-Protocol
+    /// header.
     /// </value>
     public abstract IEnumerable<string> SecWebSocketProtocols { get; }
 
     /// <summary>
-    /// Gets the value of the Sec-WebSocket-Version header field used in the
-    /// WebSocket connection request.
+    /// Gets the value of the Sec-WebSocket-Version header included in the request.
     /// </summary>
     /// <remarks>
-    /// This property represents the WebSocket protocol version of the connection.
+    /// This property represents the WebSocket protocol version.
     /// </remarks>
     /// <value>
-    /// A <see cref="string"/> that represents the value of the
-    /// Sec-WebSocket-Version header field.
+    /// A <see cref="string"/> that represents the value of the Sec-WebSocket-Version header.
     /// </value>
     public abstract string SecWebSocketVersion { get; }
 
@@ -203,11 +179,10 @@ namespace WebSocketSharp.Net.WebSockets
     public abstract System.Net.IPEndPoint ServerEndPoint { get; }
 
     /// <summary>
-    /// Gets the client information (identity, authentication information and
-    /// security roles).
+    /// Gets the client information (identity, authentication, and security roles).
     /// </summary>
     /// <value>
-    /// A <see cref="IPrincipal"/> that represents the client information.
+    /// A <see cref="IPrincipal"/> instance that represents the client information.
     /// </value>
     public abstract IPrincipal User { get; }
 
@@ -220,8 +195,8 @@ namespace WebSocketSharp.Net.WebSockets
     public abstract System.Net.IPEndPoint UserEndPoint { get; }
 
     /// <summary>
-    /// Gets the WebSocket instance used for two-way communication between client
-    /// and server.
+    /// Gets the <see cref="WebSocketSharp.WebSocket"/> instance used for two-way communication
+    /// between client and server.
     /// </summary>
     /// <value>
     /// A <see cref="WebSocketSharp.WebSocket"/>.

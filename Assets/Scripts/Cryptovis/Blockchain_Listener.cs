@@ -30,7 +30,7 @@ namespace Cryptovis
 
         private void Start()
         {
-            this.web_socket = new WebSocket( "ws://ws.blockchain.info/inv" );
+            this.web_socket = new WebSocket( "wss://ws.blockchain.info/inv" );
             this.web_socket.OnOpen += this.On_Open;
             this.web_socket.OnClose += this.On_Close;
             this.web_socket.OnMessage += this.On_Message;

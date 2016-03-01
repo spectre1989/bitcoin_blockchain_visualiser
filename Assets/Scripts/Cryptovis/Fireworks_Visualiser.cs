@@ -195,7 +195,7 @@ namespace Cryptovis
             text_and_audio_gameobject.transform.LookAt( this.camera.transform );
 
             // Set up audio
-            AudioSource audio_source = text_and_audio_gameobject.audio;
+            AudioSource audio_source = text_and_audio_gameobject.GetComponent<AudioSource>();
             audio_source.clip = audio_clip;
             audio_source.pitch = pitch;
             audio_source.Play();

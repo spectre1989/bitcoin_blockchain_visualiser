@@ -127,41 +127,6 @@ namespace Cryptovis
                 }
             }
 
-            // Text
-            string text = "";
-            float amount = transaction.Amount;
-
-            if (this.use_usd)
-            {
-                amount *= this.usd_per_btc;
-                text = "$";
-            }
-
-            if( amount < 0.001 )
-            {
-                text += "<0.001";
-            }
-            else if( amount < 1f )
-            {
-                text += amount.ToString( "0.000" );
-            }
-            else if( amount < 10f )
-            {
-                text += amount.ToString( "0.00" );
-            }
-            else if( amount < 100f )
-            {
-                text += amount.ToString( "00.0" );
-            }
-            else if( amount < 1000f )
-            {
-                text += amount.ToString( "000." );
-            }
-            else
-            {
-                text += ( amount * 0.001f ).ToString( "0.0" ) + "k";
-            }
-
             // Audio
             AudioClip audio_clip = null;
             float pitch = 1f;
@@ -179,11 +144,11 @@ namespace Cryptovis
             }
 
             ParticleSystem root_particle_system = particle_system_gameobject.GetComponent<ParticleSystem>();
-            this.StartCoroutine( this.Do_Text_And_Audio( root_particle_system, text, Mathf.Lerp( this.min_text_size, this.max_text_size, t ), audio_clip, pitch ) );
+            this.StartCoroutine( this.Do_Text_And_Audio( root_particle_system, transaction.Amount, Mathf.Lerp( this.min_text_size, this.max_text_size, t ), audio_clip, pitch ) );
             this.StartCoroutine( this.Destroy_Particle_System_When_Done( root_particle_system ) );
         }
 
-        private IEnumerator Do_Text_And_Audio( ParticleSystem particle_system, string text, float text_size, AudioClip audio_clip, float pitch )
+        private IEnumerator Do_Text_And_Audio( ParticleSystem particle_system, float amount, float text_size, AudioClip audio_clip, float pitch )
         {
             // Wait for the initial particle to be fired off
             while( particle_system.particleCount == 0 )
@@ -205,7 +170,7 @@ namespace Cryptovis
 
             // Set up text
             TextMesh text_mesh = text_and_audio_gameobject.GetComponentInChildren<TextMesh>();
-            text_mesh.text = text;
+            text_mesh.text = this.AmountToText( amount );
             text_mesh.fontSize = Mathf.RoundToInt( text_size );
             text_and_audio_gameobject.transform.position = particle_system.transform.TransformPoint( particle[0].position ) + new Vector3( 0f, 25f, 0f );
             text_and_audio_gameobject.transform.LookAt( this.camera.transform );
@@ -272,19 +237,87 @@ namespace Cryptovis
             return from + Mathf.RoundToInt( (float)( to - from ) * t );
         }
 
-        private void Start()
+        private string AmountToText( float amount )
         {
+            if( this.use_usd )
+            {
+                amount *= this.usd_per_btc;
+
+                if( amount < 0.01f )
+                {
+                    return "<$0.01";
+                }
+                else if( amount < 100f )
+                {
+                    return "$" + amount.ToString( "0.00" );
+                }
+                else if( amount < 1000f )
+                {
+                    return "$" + amount.ToString( "0." );
+                }
+                else
+                {
+                    return "$" + ( amount * 0.001f ).ToString( "0.0" ) + "k";
+                }
+            }
+
+            if( amount < 0.001 )
+            {
+                return "<0.001";
+            }
+            else if( amount < 1f )
+            {
+                return amount.ToString( "0.000" );
+            }
+            else if( amount < 10f )
+            {
+                return amount.ToString( "0.00" );
+            }
+            else if( amount < 100f )
+            {
+                return amount.ToString( "00.0" );
+            }
+            else if( amount < 1000f )
+            {
+                return amount.ToString( "000." );
+            }
+            else
+            {
+                return ( amount * 0.001f ).ToString( "0.0" ) + "k";
+            }
+        }
+
+        protected override void Start()
+        {
+            base.Start();
+        
             this.StartCoroutine( this.UpdatePrice() );
         }
 
-        private void Update()
+        protected override void Update()
         {
+            base.Update();
+
             if( Input.GetKeyDown( KeyCode.Space ) )
             {
                 if (this.usd_per_btc != 0.0f)
                 {
                     this.use_usd = !this.use_usd;
                 }
+            }
+            if( Input.GetKeyDown( KeyCode.Escape ) )
+            {
+                Application.Quit();
+            }
+        }
+
+        private void OnGUI()
+        {
+            GUILayout.Label( "Press Esc To Quit" );
+
+            if( this.usd_per_btc != 0.0f )
+            {
+                GUILayout.Label( "Prices in " + ( this.use_usd ? "USD" : "BTC" ) + " - Press Space To Toggle" );
             }
         }
 
@@ -293,13 +326,17 @@ namespace Cryptovis
             WWW www = new WWW( "http://api.coindesk.com/v1/bpi/currentprice/usd.json" );
             yield return www;
 
-            if (www.error != null)
+            if (www.error != "")
             {
                 Dictionary<string, object> price_data = Json.Deserialize( www.text ) as Dictionary<string, object>;
                 Dictionary<string, object> bpi = price_data["bpi"] as Dictionary<string, object>;
                 Dictionary<string, object> usd = bpi["USD"] as Dictionary<string, object>;
 
                 this.usd_per_btc = float.Parse( usd["rate"] as string );
+            }
+            else
+            {
+                Debug.LogWarning( "Error updating price:" + www.error );
             }
 
             // Update price every 5 minutes

@@ -176,8 +176,6 @@ GameObject:
   - 81: {fileID: 822147680}
   - 114: {fileID: 822147685}
   - 168: {fileID: 822147686}
-  - 114: {fileID: 822147687}
-  - 114: {fileID: 822147688}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -302,30 +300,6 @@ AudioEchoFilter:
   m_DecayRatio: 0.5
   m_WetMix: 0.1
   m_DryMix: 1
---- !u!114 &822147687
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 822147679}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ba112789beae6e4ba76b112e628d31b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &822147688
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 822147679}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 21d3424272ee3fb4b9bc56708c1efcdb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  text: 2f766W5EUwXBMSm38Mzxhu2f766W5EUwXBMSm38Mzx\nEsc to quit\nEnter to switch between
-    BTC and USD
 --- !u!1 &1834091258
 GameObject:
   m_ObjectHideFlags: 0

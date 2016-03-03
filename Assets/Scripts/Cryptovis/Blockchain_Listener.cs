@@ -79,7 +79,7 @@ namespace Cryptovis
                 float amount = (float)((Int64)output["value"]) * 0.00000001f;
                 
                 Transaction transaction = new Transaction( address, amount );
-
+                Debug.Log( "on_transaction" );
                 this.On_Transaction( transaction );
             }
         }

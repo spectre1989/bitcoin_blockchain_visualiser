@@ -8,25 +8,25 @@ SceneSettings:
   m_PVSPortalsArray: []
   m_OcclusionBakeSettings:
     smallestOccluder: 5
-    smallestHole: .25
+    smallestHole: 0.25
     backfaceThreshold: 100
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 6
   m_Fog: 0
-  m_FogColor: {r: .5, g: .5, b: .5, a: 1}
+  m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   m_FogMode: 3
-  m_FogDensity: .00999999978
+  m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: .200000003, g: .200000003, b: .200000003, a: 1}
-  m_AmbientEquatorColor: {r: .200000003, g: .200000003, b: .200000003, a: 1}
-  m_AmbientGroundColor: {r: .200000003, g: .200000003, b: .200000003, a: 1}
+  m_AmbientSkyColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
+  m_AmbientEquatorColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
+  m_AmbientGroundColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
   m_AmbientIntensity: 1
   m_AmbientMode: 3
   m_SkyboxMaterial: {fileID: 0}
-  m_HaloStrength: .5
+  m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
   m_HaloTexture: {fileID: 0}
@@ -40,7 +40,7 @@ RenderSettings:
 --- !u!157 &4
 LightmapSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 5
+  serializedVersion: 6
   m_GIWorkflowMode: 1
   m_LightmapsMode: 1
   m_GISettings:
@@ -66,7 +66,7 @@ LightmapSettings:
     m_FinalGather: 0
     m_FinalGatherRayCount: 1024
     m_ReflectionCompression: 2
-  m_LightmapSnapshot: {fileID: 0}
+  m_LightingDataAsset: {fileID: 0}
   m_RuntimeCPUUsage: 25
 --- !u!196 &5
 NavMeshSettings:
@@ -74,15 +74,15 @@ NavMeshSettings:
   m_ObjectHideFlags: 0
   m_BuildSettings:
     serializedVersion: 2
-    agentRadius: .5
+    agentRadius: 0.5
     agentHeight: 2
     agentSlope: 45
-    agentClimb: .400000006
+    agentClimb: 0.4
     ledgeDropHeight: 0
     maxJumpAcrossDistance: 0
     accuratePlacement: 0
     minRegionArea: 2
-    cellSize: .166666657
+    cellSize: 0.16666666
     manualCellSize: 0
   m_NavMeshData: {fileID: 0}
 --- !u!1 &270139214
@@ -108,7 +108,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 270139214}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.87190807, y: 22.3930702, z: 81.1968002}
+  m_LocalPosition: {x: -1.8719081, y: 22.39307, z: 81.1968}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -142,26 +142,26 @@ MonoBehaviour:
   amount_text_prefab: {fileID: 100000, guid: 25dc37dd4472c8c4ebfa006929979a9c, type: 2}
   min_text_size: 200
   max_text_size: 1000
-  min_amount: .100000001
+  min_amount: 0.1
   max_amount: 200
   camera: {fileID: 822147683}
   bang_sounds:
   - amount: 0
     audio_clip: {fileID: 8300000, guid: b33708d54e67a3c4ea6c19d5b088fabf, type: 3}
-    min_pitch_shift: .850000024
-    max_pitch_shift: 1.14999998
+    min_pitch_shift: 0.85
+    max_pitch_shift: 1.15
   - amount: 1
     audio_clip: {fileID: 8300000, guid: cbf3875bcfa36384eb24e4528e393755, type: 3}
-    min_pitch_shift: .850000024
-    max_pitch_shift: 1.14999998
+    min_pitch_shift: 0.85
+    max_pitch_shift: 1.15
   - amount: 10
     audio_clip: {fileID: 8300000, guid: df78d81cd5e2fe547b15f2086a22f8a8, type: 3}
-    min_pitch_shift: .850000024
-    max_pitch_shift: 1.14999998
+    min_pitch_shift: 0.85
+    max_pitch_shift: 1.15
   - amount: 50
     audio_clip: {fileID: 8300000, guid: 2d88497a371e81a409aae0e0689376ff, type: 3}
-    min_pitch_shift: .850000024
-    max_pitch_shift: 1.14999998
+    min_pitch_shift: 0.85
+    max_pitch_shift: 1.15
 --- !u!1 &822147679
 GameObject:
   m_ObjectHideFlags: 0
@@ -176,6 +176,8 @@ GameObject:
   - 81: {fileID: 822147680}
   - 114: {fileID: 822147685}
   - 168: {fileID: 822147686}
+  - 114: {fileID: 822147687}
+  - 114: {fileID: 822147688}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -213,14 +215,14 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
-  m_BackGroundColor: {r: 0, g: 0, b: 0, a: .0196078438}
+  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0.019607844}
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
     y: 0
     width: 1
     height: 1
-  near clip plane: .300000012
+  near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
   orthographic: 0
@@ -236,7 +238,7 @@ Camera:
   m_HDR: 0
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
-  m_StereoSeparation: .0219999999
+  m_StereoSeparation: 0.022
   m_StereoMirrorMode: 0
 --- !u!4 &822147684
 Transform:
@@ -264,10 +266,10 @@ MonoBehaviour:
   tweakMode: 1
   screenBlendMode: 1
   hdr: 1
-  sepBlurSpread: 1.13999999
+  sepBlurSpread: 1.14
   quality: 1
-  bloomIntensity: .99000001
-  bloomThreshhold: .119999997
+  bloomIntensity: 0.99
+  bloomThreshhold: 0.12
   bloomThreshholdColor: {r: 1, g: 1, b: 1, a: 1}
   bloomBlurIterations: 4
   hollywoodFlareBlurIterations: 2
@@ -275,12 +277,12 @@ MonoBehaviour:
   lensflareMode: 1
   hollyStretchWidth: 2.5
   lensflareIntensity: 0
-  lensflareThreshhold: .300000012
-  lensFlareSaturation: .75
-  flareColorA: {r: .400000006, g: .400000006, b: .800000012, a: .75}
-  flareColorB: {r: .400000006, g: .800000012, b: .800000012, a: .75}
-  flareColorC: {r: .800000012, g: .400000006, b: .800000012, a: .75}
-  flareColorD: {r: .800000012, g: .400000006, b: 0, a: .75}
+  lensflareThreshhold: 0.3
+  lensFlareSaturation: 0.75
+  flareColorA: {r: 0.4, g: 0.4, b: 0.8, a: 0.75}
+  flareColorB: {r: 0.4, g: 0.8, b: 0.8, a: 0.75}
+  flareColorC: {r: 0.8, g: 0.4, b: 0.8, a: 0.75}
+  flareColorD: {r: 0.8, g: 0.4, b: 0, a: 0.75}
   blurWidth: 1
   lensFlareVignetteMask: {fileID: 2800000, guid: 95ef4804fe0be4c999ddaa383536cde8,
     type: 3}
@@ -297,9 +299,33 @@ AudioEchoFilter:
   m_GameObject: {fileID: 822147679}
   m_Enabled: 0
   m_Delay: 500
-  m_DecayRatio: .5
-  m_WetMix: .100000001
+  m_DecayRatio: 0.5
+  m_WetMix: 0.1
   m_DryMix: 1
+--- !u!114 &822147687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 822147679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ba112789beae6e4ba76b112e628d31b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &822147688
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 822147679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21d3424272ee3fb4b9bc56708c1efcdb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  text: 2f766W5EUwXBMSm38Mzxhu2f766W5EUwXBMSm38Mzx\nEsc to quit\nEnter to switch between
+    BTC and USD
 --- !u!1 &1834091258
 GameObject:
   m_ObjectHideFlags: 0
@@ -334,7 +360,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1834091258}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.51277888, y: -.869544268, z: 0}
+  m_LocalPosition: {x: 1.5127789, y: -0.86954427, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}

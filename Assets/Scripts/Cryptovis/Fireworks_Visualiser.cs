@@ -1,5 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
+using MiniJSON;
+using System.Collections.Generic;
 
 namespace Cryptovis
 {
@@ -18,6 +20,8 @@ namespace Cryptovis
         public float max_amount;
         public new Camera camera;
         public Bang_Sound[] bang_sounds;
+        private float usd_per_btc;
+        private bool use_usd;
 
         protected override void Process_Transaction( Blockchain_Listener.Transaction transaction )
         {
@@ -125,25 +129,37 @@ namespace Cryptovis
 
             // Text
             string text = "";
-            if( transaction.Amount < 0.001 )
+            float amount = transaction.Amount;
+
+            if (this.use_usd)
             {
-                text = "<0.001";
+                amount *= this.usd_per_btc;
+                text = "$";
             }
-            else if( transaction.Amount < 1f )
+
+            if( amount < 0.001 )
             {
-                text = transaction.Amount.ToString( "0.000" );
+                text += "<0.001";
             }
-            else if( transaction.Amount < 10f )
+            else if( amount < 1f )
             {
-                text = transaction.Amount.ToString( "0.00" );
+                text += amount.ToString( "0.000" );
             }
-            else if( transaction.Amount < 100f )
+            else if( amount < 10f )
             {
-                text = transaction.Amount.ToString( "00.0" );
+                text += amount.ToString( "0.00" );
+            }
+            else if( amount < 100f )
+            {
+                text += amount.ToString( "00.0" );
+            }
+            else if( amount < 1000f )
+            {
+                text += amount.ToString( "000." );
             }
             else
             {
-                text = transaction.Amount.ToString( "000." );
+                text += ( amount * 0.001f ).ToString( "0.0" ) + "k";
             }
 
             // Audio
@@ -254,6 +270,42 @@ namespace Cryptovis
             }
 
             return from + Mathf.RoundToInt( (float)( to - from ) * t );
+        }
+
+        private void Start()
+        {
+            this.StartCoroutine( this.UpdatePrice() );
+        }
+
+        private void Update()
+        {
+            if( Input.GetKeyDown( KeyCode.Space ) )
+            {
+                if (this.usd_per_btc != 0.0f)
+                {
+                    this.use_usd = !this.use_usd;
+                }
+            }
+        }
+
+        private IEnumerator UpdatePrice()
+        {
+            WWW www = new WWW( "http://api.coindesk.com/v1/bpi/currentprice/usd.json" );
+            yield return www;
+
+            if (www.error != null)
+            {
+                Dictionary<string, object> price_data = Json.Deserialize( www.text ) as Dictionary<string, object>;
+                Dictionary<string, object> bpi = price_data["bpi"] as Dictionary<string, object>;
+                Dictionary<string, object> usd = bpi["USD"] as Dictionary<string, object>;
+
+                this.usd_per_btc = float.Parse( usd["rate"] as string );
+            }
+
+            // Update price every 5 minutes
+            yield return new WaitForSeconds( 60f * 5f );
+
+            this.StartCoroutine( this.UpdatePrice() );
         }
 
         [System.Serializable]

@@ -255,9 +255,17 @@ namespace Cryptovis
                 {
                     return "$" + amount.ToString( "0." );
                 }
+                else if( amount < 1000000f )
+                {
+                    return "$" + ( amount * 0.001f ).ToString( "0.0" ) + "K";
+                }
+                else if( amount < 1000000000f )
+                {
+                    return "$" + ( amount * 0.000001f ).ToString( "0.0" ) + "M";
+                }
                 else
                 {
-                    return "$" + ( amount * 0.001f ).ToString( "0.0" ) + "k";
+                    return "$" + ( amount * 0.000000001f ).ToString( "0.0" ) + "B";
                 }
             }
 
@@ -313,7 +321,9 @@ namespace Cryptovis
 
         private void OnGUI()
         {
+#if !UNITY_WEBGL
             GUILayout.Label( "Press Esc To Quit" );
+#endif
 
             if( this.usd_per_btc != 0.0f )
             {
@@ -323,7 +333,7 @@ namespace Cryptovis
 
         private IEnumerator UpdatePrice()
         {
-            WWW www = new WWW( "http://api.coindesk.com/v1/bpi/currentprice/usd.json" );
+            WWW www = new WWW( "https://api.coindesk.com/v1/bpi/currentprice/usd.json" );
             yield return www;
 
             if (www.error != "")

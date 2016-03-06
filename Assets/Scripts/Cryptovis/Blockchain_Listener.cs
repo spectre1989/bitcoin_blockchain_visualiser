@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using UnityEngine;
-#if !UNITY_WEBPLAYER
+#if !UNITY_WEBGL
 using WebSocketSharp;
 #endif
 
@@ -25,7 +25,7 @@ namespace Cryptovis
 
         public event Action<Transaction> On_Transaction;
 
-#if !UNITY_WEBPLAYER
+#if !UNITY_WEBGL
         private WebSocket web_socket;
 
         private void Start()
